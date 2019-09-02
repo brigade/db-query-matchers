@@ -157,13 +157,21 @@ describe '#make_database_queries' do
 
       context 'and there is an update query' do
         before do
-          Cat.create if Cat.count == 0
+          Cat.destroy_all
+          Cat.create
         end
 
         subject { Cat.last.update name: 'Felix' }
 
         it 'matches true' do
           expect { subject }.to make_database_queries(manipulative: true)
+        end
+
+        it 'logs binds when match fails' do
+          expect do
+            expect { subject }.not_to make_database_queries(manipulative: true)
+          end.to raise_error(RSpec::Expectations::ExpectationNotMetError,
+            /["name", "Felix"]/)
         end
       end
 

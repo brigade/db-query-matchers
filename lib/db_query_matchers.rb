@@ -1,4 +1,6 @@
 require 'db_query_matchers/version'
+require 'diffy'
+require 'db_query_matchers/change_database_queries_count'
 require 'db_query_matchers/make_database_queries'
 require 'db_query_matchers/query_counter'
 require 'db_query_matchers/configuration'

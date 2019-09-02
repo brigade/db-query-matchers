@@ -17,7 +17,18 @@ module DBQueryMatchers
     attr_reader :count, :log
 
     def initialize(options = {})
-      @matches = options[:matches]
+      if options[:manipulative]
+        @matches = [/^\ *(INSERT|UPDATE|DELETE\ FROM)/]
+      end
+      if options[:matching]
+        @matches ||= []
+        case options[:matching]
+        when Regexp
+          @matches << options[:matching]
+        when String
+          @matches << Regexp.new(Regexp.escape(options[:matching]))
+        end
+      end
       @count = 0
       @log   = []
     end
@@ -44,7 +55,7 @@ module DBQueryMatchers
       return if DBQueryMatchers.configuration.schemaless && payload[:name] == "SCHEMA"
 
       count_query
-      log_query(payload[:sql])
+      log_query(payload)
 
       DBQueryMatchers.configuration.on_query_counted.call(payload)
     end
@@ -59,16 +70,35 @@ module DBQueryMatchers
       @count += 1
     end
 
-    def log_query(sql)
-      log_entry = sql.strip
+    def log_query(payload)
+      binds =
+        unless (payload[:binds] || []).empty?
+          casted_params = type_casted_binds(payload[:type_casted_binds])
+          "  " + payload[:binds].zip(casted_params).map { |attr, value|
+            render_bind(attr, value)
+          }.inspect
+        end
 
-      if DBQueryMatchers.configuration.log_backtrace
-        raw_backtrace = caller
-        filtered_backtrace = DBQueryMatchers.configuration.backtrace_filter.call(raw_backtrace)
-        log_entry += "\n#{filtered_backtrace.join("\n")}\n"
+      filtered_backtrace =
+        if DBQueryMatchers.configuration.log_backtrace
+          "\n#{DBQueryMatchers.configuration.backtrace_filter.call(caller).join("\n")}\n"
+        end
+
+      @log << "#{payload[:sql].strip}#{binds}#{filtered_backtrace}"
+    end
+
+    def type_casted_binds(casted_binds)
+      casted_binds.respond_to?(:call) ? casted_binds.call : casted_binds
+    end
+
+    def render_bind(attr, value)
+      if attr.is_a?(Array)
+        attr = attr.first
+      elsif attr.type.binary? && attr.value
+        value = "<#{attr.value_for_database.to_s.bytesize} bytes of binary data>"
       end
 
-      @log << log_entry
+      [attr && attr.name, value]
     end
   end
 end
