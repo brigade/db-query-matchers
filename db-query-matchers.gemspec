@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_runtime_dependency 'activesupport', '>= 4.0', "< 7"
-  spec.add_runtime_dependency 'rspec', '~> 3.0'
+  spec.add_runtime_dependency 'rspec', '>= 3.0'
 
   spec.add_development_dependency 'activerecord',  '>= 4.0', "< 7"
   spec.add_development_dependency 'sqlite3'
