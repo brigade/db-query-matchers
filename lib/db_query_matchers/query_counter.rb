@@ -18,6 +18,7 @@ module DBQueryMatchers
 
     def initialize(options = {})
       @matches = options[:matches]
+      @database_role = options[:database_role]
       @count = 0
       @log   = []
     end
@@ -39,6 +40,9 @@ module DBQueryMatchers
     # @param _message_id [String] unique ID for this notification
     # @param payload    [Hash]   the payload
     def callback(_name, _start,  _finish, _message_id, payload)
+      if @database_role
+        return if ActiveRecord::Base.current_role != database_role
+      end
       return if @matches && !any_match?(@matches, payload[:sql])
       return if any_match?(DBQueryMatchers.configuration.ignores, payload[:sql])
       return if DBQueryMatchers.configuration.schemaless && payload[:name] == "SCHEMA"

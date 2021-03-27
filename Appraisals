@@ -39,3 +39,8 @@ appraise "rails_6_0" do
   gem "activesupport", version
   gem "sqlite3", "~> 1.4"
 end
+
+appraise "rails_6_0" do
+  version = "~> 6.0.3"
+  gem "activesupport", version
+end

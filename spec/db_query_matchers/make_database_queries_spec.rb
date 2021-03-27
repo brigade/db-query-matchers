@@ -485,6 +485,28 @@ describe '#make_database_queries' do
     end
   end
 
+  if Gem::Version.new(ActiveRecord::VERSION::STRING) >= Gem::Version.new('6.0.0')
+    context 'when a database_role is used' do
+      subject { Cat.first }
+
+      it 'matches true when the matching database role was used' do
+        expect do
+          ActiveRecord::Base.connected_to(:reading) do
+            subject
+          end
+        end.to make_database_queries(database_role: :reading)
+      end
+
+      it 'matches false when a non-matching database role was used' do
+        expect do
+          ActiveRecord::Base.connected_to(:reading) do
+            subject
+          end
+        end.to make_database_queries(database_role: :writing)
+      end
+    end
+  end
+
   context 'when no queries are made' do
     subject { 'hi' }
 
